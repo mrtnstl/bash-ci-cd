@@ -1,6 +1,6 @@
 # bash-ci-cd
 
-[demo](https://github.com/mrtnstl/bash-ci-cd/blob/main/docs/bash_demo.gif "demo")
+![demo](https://github.com/mrtnstl/bash-ci-cd/blob/main/docs/bash_demo.gif "demo")
 
 Continuous Integration and Continuous Delivery runner in bash.
 
