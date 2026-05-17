@@ -1,5 +1,7 @@
 # bash-ci-cd
 
+[demo](https://github.com/mrtnstl/bash-ci-cd/blob/main/docs/bash_demo.gif "demo")
+
 Continuous Integration and Continuous Delivery runner in bash.
 
 The pipeline steps are defined in the `tasks` directory. These could be easily extended if needed.
@@ -28,7 +30,7 @@ the pipeline does
 
     ```
 
-2. Make sure you have execution privileges for `start.sh`. The script will attempt to set it to the rest of the files wher needed.
+2. Make sure you have execution privileges for `start.sh`. The script will attempt to set it to the rest of the files where needed.
 
     ```bash
     chmod u+x ./start.sh
