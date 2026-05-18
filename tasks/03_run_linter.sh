@@ -1,2 +1,7 @@
 #!/usr/bin/env bash
-sleep 2
+
+source "$PWD/config.sh"
+
+cd "$WORKDIR/repo"
+
+npm run lint --silent
