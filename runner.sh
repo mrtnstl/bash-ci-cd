@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
 
-source ./common/colors.sh
-source ./common/spinner.sh
-
 run_with_spinner() {
     local name="$1"
     local command="$2"
@@ -16,13 +13,15 @@ run_with_spinner() {
     wait $pid
     local status=$? # exit code
 
+    IFS='%'
+
     if [ $status -eq 0 ]; then
-        echo -e "$(set_color $(set_color "success" "$BOLD_INTNS_WHITE") "$INTNS_BG_GREEN") ${name} (code: $status)"
+        echo -e "$(set_color $(set_color "    ok " "$BOLD_INTNS_WHITE") "$INTNS_BG_GREEN") ${name} (code: $status)"
     else
-        IFS='%'
-        echo -e "$(set_color $(set_color "fail   " "$BOLD_INTNS_WHITE") "$INTNS_BG_RED") ${name} (code: $status)"
-        unset IFS
+        echo -e "$(set_color $(set_color "  fail " "$BOLD_INTNS_WHITE") "$INTNS_BG_RED") ${name} (code: $status)"
     fi
+
+    unset IFS
 
     return $status
 }
