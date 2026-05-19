@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 
 source ./config.sh
-source ./env.sh
 source ./common/colors.sh
 source ./common/spinner.sh
 source ./common/email.sh
@@ -9,12 +8,7 @@ source ./common/display_header.sh
 source ./runner.sh
 
 display_header
-
-# CURRENT_WORKFLOW_LOG_NAME=$(ls -t "$TEMP_DIR" | head -1)
-# echo -e $(set_color "Logs will be available at $CURRENT_WORKFLOW_LOG_NAME" "$BOLD_INTNS_RED")
 echo ""
-
-# TODO: check if config is valid
 
 echo -e "$(set_color "$(set_color " start " "$BOLD_INTNS_WHITE")" "$INTNS_BG_BLUE") Starting pipeline"
 
@@ -46,8 +40,8 @@ for step in tasks/*.sh; do
         echo -e $(set_color "Logs are available at $CURRENT_WORKFLOW_LOG_NAME" "$BOLD_INTNS_RED")
 
         EMAIL="${email_parts[header_and_title_partial]}${NOTIFICATION_TITLE}${email_parts[results_header]}${NOTIFICATION_BODY}${email_parts[footer]}"
-        # echo "$EMAIL"
-        send_email "$EMAIL_TO" "Bash CI/CD fail" "$EMAIL"
+        
+        # send_email "$EMAIL_TO" "Bash CI/CD fail" "$EMAIL"
 
         exit 1
     else
@@ -70,7 +64,7 @@ echo ""
 echo -e $(set_color "Logs are available at $CURRENT_WORKFLOW_LOG_NAME" "$BOLD_INTNS_RED")
 
 EMAIL="${email_parts[header_and_title_partial]}${NOTIFICATION_TITLE}${email_parts[results_header]}${NOTIFICATION_BODY}${email_parts[footer]}"
-# echo "$EMAIL"
-send_email "$EMAIL_TO" "Bash CI/CD completion" "$EMAIL"
+
+# send_email "$EMAIL_TO" "Bash CI/CD completion" "$EMAIL"
 
 exit 0

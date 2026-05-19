@@ -25,5 +25,5 @@ display_header()
 
     unset IFS
 
-    echo -e $(set_color "Bash CI/CD (mode: $ENV)" "$BOLD_INTNS_RED")
+    echo -e $(set_color "Bash CI/CD (mode: ${ENV:-"not_set"})" "$BOLD_INTNS_RED")
 }
