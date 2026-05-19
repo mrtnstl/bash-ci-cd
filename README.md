@@ -4,22 +4,40 @@ Continuous Integration and Continuous Delivery runner in bash.
 
 ![demo](https://github.com/mrtnstl/bash-ci-cd/blob/main/docs/bash_demo.gif "demo")
 
-The pipeline steps are defined in the `tasks` directory. These could be easily extended if needed.
+The pipeline steps are defined in the `tasks` directory and are customizable.
 
-## What it does?
+## What it currently does?
 
-the pipeline does
+0. checks dependencies and prepares the workflow
 1. checks the code out from a git repository
-2. installs dependencies
+2. installs application dependencies
 3. runs linter
 4. runs tests
 5. builds the software
-6. [not implemented] builds docker image
-7. [not implemented] pushes docker image to artifact repository
-8. [not implemented] spins up the new instance of the application on the server
-9. [not implemented] sends email notification when it's done or an error occurs
+6. [not implemented] builds and pushes docker image to artifact repository
+7. [not implemented] spins up the new instance of the application on the server
+8. [partially implemented] (implemented in `start.sh`) sends email notification when it's done or an error occurs
 
-## Run
+## Requirements
+
+Your system should have `libsecret-tools`, `gnome-keyring`, `dbus-x11`, `jq`, `curl`, `git`, `ca-certificates`, `gnupg`, `node` (`npm` and `npx`).
+
+Also it's nice to have a text editor like `nano` for editing the configuration file mentioned below.
+
+If you'd like to use the pipeline with docker, these dependencies are installed during the building of the image.
+
+## Run 
+
+0. If you want to use it in a container:
+
+    ```bash
+    
+    docker build -t bash-ci-cd:test .
+
+    docker run -it bash-ci-cd:test
+
+    ```
+
 
 1. Set your variables in `config.sh`. Create it in the project root, if it doesn't exist.
 
