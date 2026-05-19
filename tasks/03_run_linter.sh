@@ -2,6 +2,8 @@
 
 source "$PWD/config.sh"
 
-cd "$WORKDIR/repo"
+CURRENT_WORKFLOW_LOG_NAME=$(ls -t "$TEMP_DIR" | head -1)
 
-npm run lint --silent
+cd "$WORKDIR/repo"
+# --silent
+echo "[$(date --utc +%FT%TZ)]___run_linter.sh___" &>> "$LOGS_DIR/$CURRENT_WORKFLOW_LOG_NAME.txt" && npm run lint &>> "$LOGS_DIR/$CURRENT_WORKFLOW_LOG_NAME.txt"
