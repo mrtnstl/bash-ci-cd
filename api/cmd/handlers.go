@@ -5,10 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"sync"
 	"time"
-
-	"example.com/api/internal"
 )
 
 type AppStatus struct {
@@ -94,8 +91,7 @@ func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *htt
 	w.Header().Set("Content-Type", "application/json")
 
 	if app.IsWorkflowRunning {
-		err := json.NewEncoder(w).Encode("{'workflow': 'running'}")
-		if err != nil {
+		if err := json.NewEncoder(w).Encode("{'workflow': 'running'}"); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
@@ -106,42 +102,17 @@ func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *htt
 	app.IsWorkflowRunning = true
 	app.LastWorkflowSinceStart.Start = time.Now().UTC()
 
-	var wg sync.WaitGroup
-	errorChan := make(chan error, 1)
-
-	wg.Go(func(){
-		if err := internal.ExecutePipeline(r.Context()); err != nil {
-			errorChan <- err		
+	go func(){
+		if err := ExecutePipeline(r.Context(), app); err != nil {
 		}
-	})
+	}()
 
-	wg.Wait()
-	close(errorChan)
-
-	var errsFromGoroutine []error
-	for err := range errorChan {
-		errsFromGoroutine = append(errsFromGoroutine, err)
-	}
-
-	if len(errsFromGoroutine) != 0 {
-		app.LastWorkflowSinceStart.Finish = time.Now().UTC()
-		app.IsWorkflowRunning = false
-
-		http.Error(w, errsFromGoroutine[0].Error(), http.StatusExpectationFailed)
-		return
-	}
-
-	app.LastWorkflowSinceStart.Finish = time.Now().UTC()
-
-	err := json.NewEncoder(w).Encode("{'workflow': 'finished'}")
-	if err != nil {
+	if err := json.NewEncoder(w).Encode("{'workflow': 'initiating'}"); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	
-	app.IsWorkflowRunning = false
 }
 
 func (app *Application) wildcardRouteHandler(w http.ResponseWriter, r *http.Request){
