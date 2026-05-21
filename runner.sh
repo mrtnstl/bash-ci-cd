@@ -16,10 +16,10 @@ run_with_spinner() {
     IFS=''
 
     if [ $status -eq 0 ]; then
-        NOTIFICATION_BODY="${NOTIFICATION_BODY}<tr><td><p style='margin:0; color:#5f6368; line-height:1.5;'>${name}</p></td><td><p>&#9989;</p></td></tr>"
+        NOTIFICATION_BODY="${NOTIFICATION_BODY}<tr style='line-height: 0px;'><td><p style='margin:0; color:#9a9a9a;'>${name}</p></td><td><p>&#9989;</p></td></tr>"
         echo -e "$(set_color $(set_color "    ok " "$BOLD_INTNS_WHITE") "$INTNS_BG_GREEN") ${name} (code: $status)"
     else
-        NOTIFICATION_BODY="${NOTIFICATION_BODY}<tr><td><p style='margin:0; color:#5f6368; line-height:1.5;'>${name}</p></td><td><p>&#10060;</p></td></tr>"
+        NOTIFICATION_BODY="${NOTIFICATION_BODY}<tr style='line-height: 0px;'><td><p style='margin:0; color:#9a9a9a;'>${name}</p></td><td><p>&#10060;</p></td></tr>"
         echo -e "$(set_color $(set_color "  fail " "$BOLD_INTNS_WHITE") "$INTNS_BG_RED") ${name} (code: $status)"
     fi
 
