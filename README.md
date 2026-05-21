@@ -49,10 +49,12 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
 
     # currently used for testing
     ENV="production"
+
     # project repo url
     REPO_URL="https://github.com/your-user/your-project.git"
     # branch name
     BRANCH="main"
+
     # the directory where the project will be cloned, tested, built, etc.
     WORKDIR="/tmp/some-folder-name"
     # directory for logs
@@ -61,6 +63,17 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
     ARTIFACTS_DIR="${WORKDIR}/artifacts"
     # temp directory, currently helps with workflow log file naming
     TEMP_DIR="${WORKDIR}/temp"
+
+    # using Resend for sending the workflow notification emails
+    # your api key
+    RESEND_KEY="your_resend_api_key"
+    # sender address, you can test it with the Resend default
+    # but you should reqister your own domain and use that
+    EMAIL_FROM="onboarding@resend.dev"
+    # reciever address, ideally your email address
+    EMAIL_TO="your.email@example.com"
+    # sender friendly name, use "Resend" while testing
+    FRIENDLY_NAME="Resend"
     ```
 
 2. Make sure you have execution privileges for `start.sh`. The script will attempt to set it to the rest of the files where needed.
