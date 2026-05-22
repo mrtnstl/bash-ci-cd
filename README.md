@@ -38,7 +38,7 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
 
     Your Resend API key will be stored by `gnome-keyring`.
     **Keep in mind that while your keyring is unlocked, any application can read the secrets within it. With that being said, it's a more than appropriate place for storing it.**
-    Substitute your key for your_resend_api_key in the below one-liner, and execute it.
+    Substitute your key for your_resend_api_key in the one-liner below, and execute it.
 
     ```bash
     echo "your_resend_api_key" | secret-tool store --label="BASH_CI_CD_RESEND_KEY" key resend_key
@@ -50,7 +50,7 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
     secret-tool search key resend_key
     ```
 
-1. Set your variables in `config.sh`. Create it in the project root, if it doesn't exist.
+2. Set your variables in `config.sh`. Create it in the project root, if it doesn't exist.
 
     **WARNING: these values are sitting in your config file as plain text!**
 
@@ -79,7 +79,7 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
     # 0 = false, 1 = true
     NOTIFICATIONS_ENABLED=0
 
-    # If NOTIFICATIONS_ENABLED is set to 0, you don't need the variables below
+    # If NOTIFICATIONS_ENABLED is set to 0, you can omit the variables below
     # Sender address, you can test it with the Resend default
     # but you should register your own domain and use that
     EMAIL_FROM="onboarding@resend.dev"
@@ -89,13 +89,13 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
     FRIENDLY_NAME="Resend"
     ```
 
-2. Make sure you have execution privileges for `start.sh`. The script will attempt to set it to the rest of the files where needed.
+3. Make sure you have execution privileges for `start.sh`. The script will attempt to set it to the rest of the files where needed.
 
     ```bash
     chmod u+x ./start.sh
     ```
 
-3. Run script.
+4. Run script.
 
     ```bash
     ./start.sh
@@ -114,7 +114,7 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
     ```
 
     The `-it` flag makes the contaner start in interactive mode and allocates a pseudo-terminal, so you can interract with it.
-    This is important, because you need to set up your system inside the container, just as shown in the "As a standalone script" part of this documentation.
+    This is important, because you need to set up your system inside the container, just as shown in the **As a standalone script** part of this documentation.
 
 ### With GitHub webhook reciever, as a service
 
@@ -132,4 +132,4 @@ These files are automatically removed at the start of each workflow run!
 
 Log files are collected in `$LOGS_DIR`.
 
-These files will not be deleted by the workflow.
+These files will **not** be deleted by the workflow.
