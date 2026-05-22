@@ -10,7 +10,7 @@ Currently set up to process a Node.js project written in TypeScript, linted with
 
 ## What it currently does?
 
-0. checks dependencies and prepares the workflow
+0. checks system dependencies and prepares the workflow
 1. checks the code out from a git repository
 2. installs application dependencies
 3. runs linter
@@ -18,7 +18,7 @@ Currently set up to process a Node.js project written in TypeScript, linted with
 5. builds the software
 6. [not implemented] builds and pushes docker image to artifact repository
 7. [not implemented] spins up the new instance of the application on the server
-8. sends email notification when it's done or an error occurs (not part of `tasks` dir)
+8. sends email notification when it's done or when an error occurs (not part of `tasks` dir)
 
 ## Requirements
 
@@ -32,40 +32,60 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
 
 ### As a standalone script
 
+1. Setting up secrets.
+
+    If email notifications are not needed, you can omit this step.
+
+    Your Resend API key will be stored by `gnome-keyring`.
+    **Keep in mind that while your keyring is unlocked, any application can read the secrets within it. With that being said, it's a more than appropriate place for storing it.**
+    Substitute your key for your_resend_api_key in the below one-liner, and execute it.
+
+    ```bash
+    echo "your_resend_api_key" | secret-tool store --label="BASH_CI_CD_RESEND_KEY" key resend_key
+    ```
+
+    You can check if the previous command was successful by executing the following line.
+
+    ```bash
+    secret-tool search key resend_key
+    ```
+
 1. Set your variables in `config.sh`. Create it in the project root, if it doesn't exist.
 
-    **WARNING: these values are sitting in your config file in plain text!**
+    **WARNING: these values are sitting in your config file as plain text!**
 
     config.sh
     ```bash
     #!/usr/bin/env bash
 
-    # currently used for testing
+    # Currently used for testing
     ENV="production"
 
-    # project repo url
+    # Project repo url
     REPO_URL="https://github.com/your-user/your-project.git"
-    # branch name
+    # Branch name
     BRANCH="main"
 
-    # the directory where the project will be cloned, tested, built, etc.
+    # The directory where the project will be cloned, tested, built, etc.
     WORKDIR="/tmp/some-folder-name"
-    # directory for logs
+    # Directory for logs
     LOGS_DIR="${WORKDIR}/logs"
-    # directory for artifacts, like test coverage reports
+    # Directory for artifacts, like test coverage reports
     ARTIFACTS_DIR="${WORKDIR}/artifacts"
-    # temp directory, currently helps with workflow log file naming
+    # Temp directory, currently helps with workflow log file naming
     TEMP_DIR="${WORKDIR}/temp"
+    
+    # Using Resend for sending the workflow notification emails
+    # 0 = false, 1 = true
+    NOTIFICATIONS_ENABLED=0
 
-    # using Resend for sending the workflow notification emails
-    # your api key
-    RESEND_KEY="your_resend_api_key"
-    # sender address, you can test it with the Resend default
-    # but you should reqister your own domain and use that
+    # If NOTIFICATIONS_ENABLED is set to 0, you don't need the variables below
+    # Sender address, you can test it with the Resend default
+    # but you should register your own domain and use that
     EMAIL_FROM="onboarding@resend.dev"
-    # reciever address, ideally your email address
+    # Reciever address, ideally your email address
     EMAIL_TO="your.email@example.com"
-    # sender friendly name, use "Resend" while testing
+    # Sender friendly name, use "Resend" while testing
     FRIENDLY_NAME="Resend"
     ```
 
@@ -83,7 +103,7 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
 
 ### Inside a Docker container
 
-1. Before setting up the environment shown in the standalone version, build and start the Docker image/container.
+1. Before setting up the secrets and environment shown in the standalone version, build and start the Docker image/container.
 
     ```bash
     
@@ -94,6 +114,7 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
     ```
 
     The `-it` flag makes the contaner start in interactive mode and allocates a pseudo-terminal, so you can interract with it.
+    This is important, because you need to set up your system inside the container, just as shown in the "As a standalone script" part of this documentation.
 
 ### With GitHub webhook reciever, as a service
 

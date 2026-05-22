@@ -39,9 +39,10 @@ for step in tasks/*.sh; do
         echo ""
         echo -e $(set_color "Logs are available at $CURRENT_WORKFLOW_LOG_NAME" "$BOLD_INTNS_RED")
 
-        EMAIL=$(create_workflow_notification_email "$NOTIFICATION_TITLE" "$NOTIFICATION_BODY")
-        
-        #send_email "$EMAIL_TO" "Bash CI/CD fail" "$EMAIL"
+        if [ $NOTIFICATIONS_ENABLED -eq 1 ]; then 
+            EMAIL=$(create_workflow_notification_email "$NOTIFICATION_TITLE" "$NOTIFICATION_BODY")
+            send_email "$EMAIL_TO" "Bash CI/CD fail" "$EMAIL"
+        fi
 
         exit 1
     else
@@ -63,8 +64,9 @@ echo -e "$(set_color "$(set_color "  stop " "$BOLD_INTNS_WHITE")" "$INTNS_BG_BLU
 echo ""
 echo -e $(set_color "Logs are available at $CURRENT_WORKFLOW_LOG_NAME" "$BOLD_INTNS_RED")
 
-EMAIL=$(create_workflow_notification_email "$NOTIFICATION_TITLE" "$NOTIFICATION_BODY")
-
-#send_email "$EMAIL_TO" "Bash CI/CD completion" "$EMAIL"
+if [ $NOTIFICATIONS_ENABLED -eq 1 ]; then 
+    EMAIL=$(create_workflow_notification_email "$NOTIFICATION_TITLE" "$NOTIFICATION_BODY")
+    send_email "$EMAIL_TO" "Bash CI/CD completion" "$EMAIL"
+fi
 
 exit 0
