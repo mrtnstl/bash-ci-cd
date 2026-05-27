@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 
-source secret.sh
-
 send_email()
 {
-    local recipient=$1 subject=$2 html_content=$3
+    local recipient=$1 subject=$2 html_content=$3 api_key=$4
 
     jq -n \
     --arg from "$FRIENDLY_NAME <$EMAIL_FROM>" \
@@ -17,7 +15,7 @@ send_email()
     "subject": $subject,
     "html": $html
     }' | curl -X POST https://api.resend.com/emails \
-        -H "Authorization: Bearer $(get_secret key resend_key)" \
+        -H "Authorization: Bearer $api_key" \
         -H "Content-Type: application/json" \
         -d @-
 }

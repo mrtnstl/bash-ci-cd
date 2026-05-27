@@ -4,6 +4,7 @@ source ./config.sh
 source ./common/colors.sh
 source ./common/spinner.sh
 source ./common/email.sh
+source ./common/secret.sh
 source ./common/display_header.sh
 source ./runner.sh
 
@@ -41,7 +42,7 @@ for step in tasks/*.sh; do
 
         if [ $NOTIFICATIONS_ENABLED -eq 1 ]; then 
             EMAIL=$(create_workflow_notification_email "$NOTIFICATION_TITLE" "$NOTIFICATION_BODY")
-            send_email "$EMAIL_TO" "Bash CI/CD fail" "$EMAIL"
+            send_email "$EMAIL_TO" "Bash CI/CD fail" "$EMAIL" "$(get_secret key resend_key)"
         fi
 
         exit 1
@@ -66,7 +67,7 @@ echo -e $(set_color "Logs are available at $CURRENT_WORKFLOW_LOG_NAME" "$BOLD_IN
 
 if [ $NOTIFICATIONS_ENABLED -eq 1 ]; then 
     EMAIL=$(create_workflow_notification_email "$NOTIFICATION_TITLE" "$NOTIFICATION_BODY")
-    send_email "$EMAIL_TO" "Bash CI/CD completion" "$EMAIL"
+    send_email "$EMAIL_TO" "Bash CI/CD completion" "$EMAIL" "$(get_secret key resend_key)"
 fi
 
 exit 0
