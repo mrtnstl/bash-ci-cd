@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 )
 
 type AppStatus struct {
-	IsAlive bool `json:"is_live"`
+	IsAlive bool `json:"is_alive"`
 	Uptime string `json:"uptime"`
 	LastWorkflowStat
 }
