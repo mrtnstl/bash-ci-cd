@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"log"
@@ -6,17 +6,11 @@ import (
 	"time"
 )
 
-type LastWorkflowStat struct {
-	Start time.Time `json:"last_wf_start"`
-	Finish time.Time `json:"last_wf_finish"`
-}
-
 type Application struct {
 	Config Config
 	DB any // not implemented
 	StartedAt time.Time
-	LastWorkflowSinceStart LastWorkflowStat
-	IsWorkflowRunning bool
+	Runner Runner
 }
 
 type Config struct {
@@ -29,11 +23,13 @@ func NewApplication(address string) *Application{
 			Addr: address,
 		},
 		StartedAt: time.Now(),
-		LastWorkflowSinceStart: LastWorkflowStat{
-			Start: time.Time{},
+		Runner: Runner{
+			LastWorkflowSinceStart: LastWorkflowStat{
+				Start: time.Time{},
 			Finish: time.Time{},
+			},
+			IsWorkflowRunning: false,
 		},
-		IsWorkflowRunning: false,
 	}
 }
 
@@ -41,6 +37,9 @@ func (app *Application) Run() error {
 	router := app.Mount()
 	middlewareStack := app.MiddlewareStack(
 		app.RequestLoggerMiddleware,
+		app.CheckAllowedDomainsMiddleware,
+		app.RateLimiterMiddleware,
+		app.RequireHeaderSecretMiddleware,
 	)
 	log.Printf("API started on port %s\n", app.Config.Addr)
 	

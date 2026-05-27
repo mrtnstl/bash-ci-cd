@@ -1,4 +1,4 @@
-package cmd
+package main
 
 import (
 	"bytes"
@@ -9,8 +9,21 @@ import (
 	"time"
 )
 
-func ExecutePipeline(ctx context.Context, app *Application) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Minute * 10)
+const PIPELINE_TIMEOUT_MINUTES int = 10
+const PIPELINE_ENTRY_SCRIPT_NAME string = "./start.sh"
+
+type LastWorkflowStat struct {
+	Start time.Time `json:"last_wf_start"`
+	Finish time.Time `json:"last_wf_finish"`
+}
+
+type Runner struct {
+	LastWorkflowSinceStart LastWorkflowStat
+	IsWorkflowRunning bool
+}
+
+func (r *Runner) ExecutePipeline(ctx context.Context, app *Application) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(PIPELINE_TIMEOUT_MINUTES) * time.Minute)
 	defer cancel()
 
 	pwd, err := os.Getwd()
@@ -23,7 +36,7 @@ func ExecutePipeline(ctx context.Context, app *Application) error {
 	poppedPwd := slicedPwd[:len(slicedPwd)-1]
 	newPwd := strings.Join(poppedPwd, "/")
 	
-	cmd := exec.Command("./start.sh")
+	cmd := exec.Command(PIPELINE_ENTRY_SCRIPT_NAME)
 	cmd.Dir = newPwd
 
 	var out bytes.Buffer
@@ -35,8 +48,8 @@ func ExecutePipeline(ctx context.Context, app *Application) error {
 		return err
 	}
 
-	app.LastWorkflowSinceStart.Finish = time.Now().UTC()
-	app.IsWorkflowRunning = false
+	r.LastWorkflowSinceStart.Finish = time.Now().UTC()
+	r.IsWorkflowRunning = false
 	// at tis time, we don't need the workflow output, the email notification handles the details
 	//log.Println("\n", out.String())
 	

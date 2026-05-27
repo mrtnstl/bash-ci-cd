@@ -1,3 +1,4 @@
 *.temp.*
 config.sh
 bin
+.env

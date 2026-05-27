@@ -43,8 +43,8 @@ func (app *Application) getHealthHandler(w http.ResponseWriter, r *http.Request)
 		IsAlive: true,
 		Uptime: time.Since(app.StartedAt).Truncate(time.Second).String(),
 		LastWorkflowStat: LastWorkflowStat{
-			Start: app.LastWorkflowSinceStart.Start,
-			Finish: app.LastWorkflowSinceStart.Finish,
+			Start: app.Runner.LastWorkflowSinceStart.Start,
+			Finish: app.Runner.LastWorkflowSinceStart.Finish,
 		},
 	}
 
@@ -90,7 +90,7 @@ func (app *Application) getStatsPaginatedHandler(w http.ResponseWriter, r *http.
 func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *http.Request){
 	w.Header().Set("Content-Type", "application/json")
 
-	if app.IsWorkflowRunning {
+	if app.Runner.IsWorkflowRunning {
 		if err := json.NewEncoder(w).Encode("{'workflow': 'running'}"); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
@@ -99,11 +99,11 @@ func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *htt
 		return
 	}
 
-	app.IsWorkflowRunning = true
-	app.LastWorkflowSinceStart.Start = time.Now().UTC()
+	app.Runner.IsWorkflowRunning = true
+	app.Runner.LastWorkflowSinceStart.Start = time.Now().UTC()
 
 	go func(){
-		if err := ExecutePipeline(r.Context(), app); err != nil {
+		if err := app.Runner.ExecutePipeline(r.Context(), app); err != nil {
 		}
 	}()
 
