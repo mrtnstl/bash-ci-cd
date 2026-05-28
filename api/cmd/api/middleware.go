@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"log"
@@ -6,6 +6,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"example.com/api/internals/utils"
 )
 
 // resp writer wrapper for middleware that need response status code
@@ -32,12 +34,12 @@ func (app *Application) MiddlewareStack(middleware ...Middleware) Middleware {
 }
 
 func (app *Application) RequestLoggerMiddleware(next http.Handler) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request){
+	return func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
 		wrapped := &wrappedWriter{
 			ResponseWriter: w,
-			statusCode: http.StatusOK,
+			statusCode:     http.StatusOK,
 		}
 		next.ServeHTTP(wrapped, r)
 
@@ -58,28 +60,28 @@ func (app *Application) RequireHeaderSecretMiddleware(next http.Handler) http.Ha
 }
 
 func (app *Application) RateLimiterMiddleware(next http.Handler) http.HandlerFunc {
-	return func (w http.ResponseWriter, r *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
 		// TODO:
 		next.ServeHTTP(w, r)
 	}
 }
 
 func (app *Application) CheckAllowedDomainsMiddleware(next http.Handler) http.HandlerFunc {
-	return func (w http.ResponseWriter, r *http.Request) {
-		ip, err := getIP(r)
+	return func(w http.ResponseWriter, r *http.Request) {
+		ip, err := utils.GetIP(r)
 		if err != nil {
 			http.Error(w, "Can not determine client origin", http.StatusInternalServerError)
 			return
 		}
-		
-		allowedDomainsFromEnv := getEnvString("ALLOWED_DOMAINS")
-		
+
+		allowedDomainsFromEnv := utils.GetEnvString("ALLOWED_DOMAINS")
+
 		allowedDomains := strings.Split(allowedDomainsFromEnv, ";")
 		if !slices.Contains(allowedDomains, ip) {
 			http.Error(w, "Not Allowed!", http.StatusUnauthorized)
 			return
 		}
-		
+
 		next.ServeHTTP(w, r)
 	}
 }

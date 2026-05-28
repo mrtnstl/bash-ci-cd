@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -9,7 +9,9 @@ import (
 )
 
 func TestGetHealthHandler(t *testing.T){
-	app := NewApplication(":8080")
+	app := NewApplication(Config{
+		Addr: ":8080",
+	})
 	server := httptest.NewServer(http.HandlerFunc(app.getHealthHandler))
 
 	resp, err := http.Get(server.URL)
@@ -49,7 +51,9 @@ func TestGetHealthHandler(t *testing.T){
 }
 
 func TestGetStatsPaginatedHandler(t *testing.T){
-	app := NewApplication(":8080")
+	app := NewApplication(Config{
+		Addr: ":8080",
+	})
 	server := httptest.NewServer(http.HandlerFunc(app.getStatsPaginatedHandler))
 
 	// case: no query params
@@ -101,7 +105,9 @@ func TestTriggerCICDWorkflowHandler(t *testing.T){
 }
 
 func TestWildcardRouteHandler(t *testing.T){
-	app := NewApplication(":8080")
+	app := NewApplication(Config{
+		Addr: ":8080",
+	})
 	server := httptest.NewServer(http.HandlerFunc(app.wildcardRouteHandler))
 
 	resp, err := http.Get(server.URL)

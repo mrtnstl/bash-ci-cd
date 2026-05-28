@@ -1,4 +1,4 @@
-package main
+package utils
 
 import (
 	"errors"
@@ -8,12 +8,12 @@ import (
 	"strings"
 )
 
-func getIP(r *http.Request) (string, error){
+func GetIP(r *http.Request) (string, error) {
 	ips := r.Header.Get("X-Forwarder-For")
 	splitIps := strings.Split(ips, ",")
-	
+
 	if len(splitIps) > 0 {
-		netIP := net.ParseIP(splitIps[len(splitIps) - 1])
+		netIP := net.ParseIP(splitIps[len(splitIps)-1])
 		if netIP != nil {
 			return netIP.String(), nil
 		}
@@ -34,10 +34,9 @@ func getIP(r *http.Request) (string, error){
 		return ip, nil
 	}
 
-
 	return "", errors.New("IP not found!")
 }
 
-func getEnvString(key string) string {
+func GetEnvString(key string) string {
 	return os.Getenv(key)
 }

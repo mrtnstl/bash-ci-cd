@@ -1,4 +1,4 @@
-package main
+package api
 
 import (
 	"encoding/json"
@@ -6,44 +6,46 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"example.com/api/internals/runner"
 )
 
 type AppStatus struct {
-	IsAlive bool `json:"is_alive"`
-	Uptime string `json:"uptime"`
-	LastWorkflowStat
+	IsAlive bool   `json:"is_alive"`
+	Uptime  string `json:"uptime"`
+	runner.LastWorkflowStat
 }
 
 type Log struct {
-	Id int64 `json:"id"`
-	Timestamp string `json:"timestamp"`
+	Id            int64  `json:"id"`
+	Timestamp     string `json:"timestamp"`
 	MethodAndPath string `json:"method_and_path"`
-	ResponseCode int64 `json:"response_code"`
+	ResponseCode  int64  `json:"response_code"`
 }
 
 var logs = []Log{
 	{
-		Id: 1,
-		Timestamp: time.Now().UTC().String(),
+		Id:            1,
+		Timestamp:     time.Now().UTC().String(),
 		MethodAndPath: "GET /v1/health",
-		ResponseCode: 200,
+		ResponseCode:  200,
 	},
 	{
-		Id: 2,
-		Timestamp: time.Now().UTC().String(),
+		Id:            2,
+		Timestamp:     time.Now().UTC().String(),
 		MethodAndPath: "GET /v1/stats",
-		ResponseCode: 200,
+		ResponseCode:  200,
 	},
 }
 
 func (app *Application) getHealthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	
+
 	appStatus := AppStatus{
 		IsAlive: true,
-		Uptime: time.Since(app.StartedAt).Truncate(time.Second).String(),
-		LastWorkflowStat: LastWorkflowStat{
-			Start: app.Runner.LastWorkflowSinceStart.Start,
+		Uptime:  time.Since(app.StartedAt).Truncate(time.Second).String(),
+		LastWorkflowStat: runner.LastWorkflowStat{
+			Start:  app.Runner.LastWorkflowSinceStart.Start,
 			Finish: app.Runner.LastWorkflowSinceStart.Finish,
 		},
 	}
@@ -53,11 +55,11 @@ func (app *Application) getHealthHandler(w http.ResponseWriter, r *http.Request)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
-	
+
 	w.WriteHeader(http.StatusOK)
 }
 
-func (app *Application) getStatsPaginatedHandler(w http.ResponseWriter, r *http.Request){
+func (app *Application) getStatsPaginatedHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	limit := r.URL.Query().Get("limit")
@@ -87,7 +89,7 @@ func (app *Application) getStatsPaginatedHandler(w http.ResponseWriter, r *http.
 }
 
 // workflow execution runs in a goroutine, handler responds if one is already running
-func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *http.Request){
+func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	if app.Runner.IsWorkflowRunning {
@@ -95,15 +97,15 @@ func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *htt
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusContinue)
+		w.WriteHeader(http.StatusAccepted)
 		return
 	}
 
 	app.Runner.IsWorkflowRunning = true
 	app.Runner.LastWorkflowSinceStart.Start = time.Now().UTC()
 
-	go func(){
-		if err := app.Runner.ExecutePipeline(r.Context(), app); err != nil {
+	go func() {
+		if err := app.Runner.ExecutePipeline(r.Context()); err != nil {
 		}
 	}()
 
@@ -115,6 +117,6 @@ func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *htt
 	w.WriteHeader(http.StatusOK)
 }
 
-func (app *Application) wildcardRouteHandler(w http.ResponseWriter, r *http.Request){
-	http.Error(w, "Not Found!",http.StatusNotFound)
+func (app *Application) wildcardRouteHandler(w http.ResponseWriter, r *http.Request) {
+	http.Error(w, "Not Found!", http.StatusNotFound)
 }

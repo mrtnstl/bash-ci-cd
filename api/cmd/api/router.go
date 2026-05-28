@@ -1,16 +1,17 @@
-package main
+package api
 
 import (
 	"net/http"
 )
 
-func (app *Application) Mount() *http.ServeMux{
+func (app *Application) Mount() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", app.wildcardRouteHandler)
 
 	v1 := http.NewServeMux()
 
+	v1.Handle("GET /swagger/*", http.FileServer(http.FS(SwaggerUI)))
 	v1.HandleFunc("GET /health", app.getHealthHandler)
 	v1.HandleFunc("GET /stats", app.getStatsPaginatedHandler)
 	v1.HandleFunc("POST /trigger", app.triggerCICDWorkflowHandler)
