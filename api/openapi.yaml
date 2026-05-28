@@ -52,6 +52,26 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/StatsResponse"
+  /trigger:
+    post:
+      tags: 
+        - webhook
+      summary: Triggers CI/CD workflow.
+      description: Triggers CI/CD workflow. If a workflow is running, it returns a message signaling it.
+      parameters:
+      responses:
+        "200":
+          description: workflow started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowStartResponse"
+        "202":
+          description: workflow already running
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/WorkflowAlreadyRunningResponse"
 
 components: 
   schemas: 
@@ -82,7 +102,17 @@ components:
           was_successful:
             type: boolean
 
-    TriggerAlreadyRunningResponse: # 202 Accepted
+    WorkflowStartResponse:
+      type: object
+      properties:
+        workflow:
+          type: string
+
+    WorkflowAlreadyRunningResponse:
+      type: object
+      properties:
+        workflow:
+          type: string
 
     ErrInternal:
 
