@@ -1,6 +1,7 @@
 package api
 
 import (
+	"embed"
 	"log"
 	"net/http"
 	"time"
@@ -17,6 +18,7 @@ type Application struct {
 
 type Config struct {
 	Addr string
+	Static embed.FS
 }
 
 func NewApplication(config Config) *Application {

@@ -1,0 +1,93 @@
+openapi: 3.0.4
+info:
+  title: Workflow Runner Webhook API
+  description: This is the backend API for running webhook triggered CI/CD workflows with Bash CI/CD.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8080/api/v1
+    description: Development server
+
+tags:
+  - name: webhook
+    description: Webhook receiver endpoint
+  - name: info
+    description: Information retrieval endpoints
+
+paths:
+  /health:
+    get:
+      tags: 
+        - info
+      summary: Returns data about the API.
+      description: Returns information about service uptime and the start and end of the last workflow.
+      responses:
+        "200":
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthResponse"
+  /stats:
+    get:
+      tags: 
+        - info
+      summary: Returns information about past workflows.
+      description: Returns a paginated list of previously executed CI/CD workflows.
+      parameters:
+      - name: page
+        in: query
+        required: false
+        schema:
+          type: integer
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+      responses:
+        "200":
+          description: success
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatsResponse"
+
+components: 
+  schemas: 
+    HealthResponse:
+      type: object
+      properties:
+        is_alive:
+          type: boolean
+        uptime:
+          type: string
+        last_wf_start:
+          type: string
+          format: date-time
+        last_wf_finish:
+          type: string
+          format: date-time
+
+    StatsResponse:
+      type: array
+      items:
+        type: object
+        properties:
+          initiated_at:
+            type: string
+            format: date-time
+          runtime:
+            type: string
+          was_successful:
+            type: boolean
+
+    TriggerAlreadyRunningResponse: # 202 Accepted
+
+    ErrInternal:
+
+    ErrUnauthorized:
+
+    ErrBadRequest:
+
+    ErrNotFound:

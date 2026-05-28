@@ -17,10 +17,10 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Fatal("error loading .env file")
 	}
-
 	port := utils.GetEnvString("PORT")
 	api := api.NewApplication(api.Config{
 		Addr: port,
+		Static: SwaggerUI,
 	})
 
 	if err := api.Run(); err != nil {
