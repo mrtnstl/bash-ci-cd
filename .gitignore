@@ -2,3 +2,4 @@
 config.sh
 bin
 .env
+*_log.*

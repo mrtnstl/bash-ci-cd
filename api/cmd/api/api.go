@@ -19,6 +19,7 @@ type Application struct {
 type Config struct {
 	Addr string
 	Static embed.FS
+	AccessLogLocation string
 }
 
 func NewApplication(config Config) *Application {
