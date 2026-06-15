@@ -5,13 +5,19 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 )
 
-func TestGetHealthHandler(t *testing.T){
+func TestGetHealthHandler(t *testing.T) {
+	var wg sync.WaitGroup
+	shutdownChan := make(chan bool)
 	app := NewApplication(Config{
 		Addr: ":8080",
-	})
+	},
+		&wg,
+		&shutdownChan,
+	)
 	server := httptest.NewServer(http.HandlerFunc(app.getHealthHandler))
 
 	resp, err := http.Get(server.URL)
@@ -28,7 +34,7 @@ func TestGetHealthHandler(t *testing.T){
 	if err != nil {
 		t.Error(err)
 	}
-	
+
 	var parsedRespBody map[string]any
 	err = json.Unmarshal(b, &parsedRespBody)
 	if err != nil {
@@ -50,14 +56,19 @@ func TestGetHealthHandler(t *testing.T){
 	}
 }
 
-func TestGetStatsPaginatedHandler(t *testing.T){
+func TestGetStatsPaginatedHandler(t *testing.T) {
+	var wg sync.WaitGroup
+	shutdownChan := make(chan bool)
 	app := NewApplication(Config{
 		Addr: ":8080",
-	})
+	},
+		&wg,
+		&shutdownChan,
+	)
 	server := httptest.NewServer(http.HandlerFunc(app.getStatsPaginatedHandler))
 
 	// case: no query params
-	resp, err := http.Get(server.URL+"?limit=&page=")
+	resp, err := http.Get(server.URL + "?limit=&page=")
 	if err != nil {
 		t.Error(err)
 	}
@@ -68,7 +79,7 @@ func TestGetStatsPaginatedHandler(t *testing.T){
 
 	// case: with valid query params
 
-	resp, err = http.Get(server.URL+"?limit=20&page=1")
+	resp, err = http.Get(server.URL + "?limit=20&page=1")
 	if err != nil {
 		t.Error(err)
 	}
@@ -80,7 +91,7 @@ func TestGetStatsPaginatedHandler(t *testing.T){
 	// TODO: validate body
 
 	// case: with invalid query params
-	resp, err = http.Get(server.URL+"?limit=invalid&page=2")
+	resp, err = http.Get(server.URL + "?limit=invalid&page=2")
 	if err != nil {
 		t.Error(err)
 	}
@@ -89,7 +100,7 @@ func TestGetStatsPaginatedHandler(t *testing.T){
 		t.Errorf("expected status code 400 but got %d", resp.StatusCode)
 	}
 
-	resp, err = http.Get(server.URL+"?limit=&page=invalid")
+	resp, err = http.Get(server.URL + "?limit=&page=invalid")
 	if err != nil {
 		t.Error(err)
 	}
@@ -100,14 +111,19 @@ func TestGetStatsPaginatedHandler(t *testing.T){
 
 }
 
-func TestTriggerCICDWorkflowHandler(t *testing.T){
+func TestTriggerCICDWorkflowHandler(t *testing.T) {
 	// TODO
 }
 
-func TestWildcardRouteHandler(t *testing.T){
+func TestWildcardRouteHandler(t *testing.T) {
+	var wg sync.WaitGroup
+	shutdownChan := make(chan bool)
 	app := NewApplication(Config{
 		Addr: ":8080",
-	})
+	},
+		&wg,
+		&shutdownChan,
+	)
 	server := httptest.NewServer(http.HandlerFunc(app.wildcardRouteHandler))
 
 	resp, err := http.Get(server.URL)

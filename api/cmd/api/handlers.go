@@ -1,7 +1,9 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -91,6 +93,7 @@ func (app *Application) getStatsPaginatedHandler(w http.ResponseWriter, r *http.
 // workflow execution runs in a goroutine, handler responds if one is already running
 func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("Connection", "close")
 
 	if app.Runner.IsWorkflowRunning {
 		if err := json.NewEncoder(w).Encode("{'workflow': 'running'}"); err != nil {
@@ -104,10 +107,12 @@ func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *htt
 	app.Runner.IsWorkflowRunning = true
 	app.Runner.LastWorkflowSinceStart.Start = time.Now().UTC()
 
-	go func() {
-		if err := app.Runner.ExecutePipeline(r.Context()); err != nil {
+	app.GlobalWG.Go(func() {
+		if err := app.Runner.ExecutePipeline(context.Background(), app.ShutdownChan); err != nil {
+			fmt.Printf("execute pipeline error: %v", err)
 		}
-	}()
+		app.Runner.IsWorkflowRunning = false
+	})
 
 	if err := json.NewEncoder(w).Encode("{'workflow': 'initiating'}"); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
