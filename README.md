@@ -9,7 +9,7 @@ The pipeline steps are defined in the `tasks` directory and are customizable.
 Currently set up to process a Node.js project written in TypeScript, linted with ESLint, tested with Jest.
 
 ## What it currently does?
-
+```
 0. checks system dependencies and prepares the workflow
 1. checks the code out from a git repository
 2. installs application dependencies
@@ -19,7 +19,7 @@ Currently set up to process a Node.js project written in TypeScript, linted with
 6. [not implemented] builds and pushes docker image to artifact repository
 7. [not implemented] spins up the new instance of the application on the server
 8. sends email notification when it's done or when an error occurs (not part of `tasks` dir)
-
+```
 ## Requirements
 
 Your system should have `libsecret-tools`, `gnome-keyring`, `dbus-x11`, `jq`, `curl`, `git`, `ca-certificates`, `gnupg`, `node` (`npm` and `npx`).
@@ -37,7 +37,9 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
     If email notifications are not needed, you can omit this step.
 
     Your Resend API key will be stored by `gnome-keyring`.
+
     **Keep in mind that while your keyring is unlocked, any application can read the secrets within it. With that being said, it's a more than appropriate place for storing it.**
+    
     Substitute your key for your_resend_api_key in the one-liner below, and execute it.
 
     ```bash
@@ -103,6 +105,8 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
 
 ### Inside a Docker container
 
+*(containerized ubuntu!!! only for testing purposes, ~1.3 GB image size)*
+
 1. Before setting up the secrets and environment shown in the standalone version, build and start the Docker image/container.
 
     ```bash
@@ -116,9 +120,19 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
     The `-it` flag makes the contaner start in interactive mode and allocates a pseudo-terminal, so you can interract with it.
     This is important, because you need to set up your system inside the container, just as shown in the **As a standalone script** part of this documentation.
 
-### With GitHub webhook reciever, as a service
+### **[in progress]** With GitHub webhook reciever, as a service
 
-[in progress]
+
+
+1. Build and start backend service with Docker
+
+    ```bash
+    docker build --rm -f DockerfileService -t ci-cd-service:test .
+    ```
+
+    ```bash
+    docker run -d -p 8080:8080 --name ci-cd-service-test ci-cd-service:test
+    ```
 
 ## Artifacts
 
