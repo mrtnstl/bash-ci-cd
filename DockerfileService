@@ -1,0 +1,19 @@
+FROM golang:1.26.4-alpine AS builder
+
+WORKDIR /build
+
+COPY ./api .
+
+RUN go mod tidy
+
+RUN go build -o /api
+
+FROM scratch
+
+WORKDIR /bin
+
+COPY --from=builder /api /api
+
+EXPOSE 8080
+
+CMD ["/api"]
