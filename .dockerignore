@@ -2,3 +2,8 @@
 config.sh
 docs
 Dockerfile
+bin
+.air.toml
+.env
+Makefile
+*_log*
