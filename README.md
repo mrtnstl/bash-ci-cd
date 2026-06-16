@@ -52,6 +52,10 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
     secret-tool search key resend_key
     ```
 
+    The workflow report looks like this
+
+<img src="https://github.com/mrtnstl/bash-ci-cd/blob/main/docs/workflow_report_email.png" alt="workflow report email" width="800">
+
 2. Set your variables in `config.sh`. Create it in the project root, if it doesn't exist.
 
     **WARNING: these values are sitting in your config file as plain text!**
@@ -111,7 +115,7 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
 
     ```bash
     
-    docker build -t bash-ci-cd:test .
+    docker build -f DockerfileScript -t bash-ci-cd:test .
 
     docker run -it bash-ci-cd:test
 
