@@ -54,7 +54,7 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
 
     The workflow report looks like this
 
-<img src="https://github.com/mrtnstl/bash-ci-cd/blob/main/docs/workflow_report_email.png" alt="workflow report email" width="800">
+<img src="https://github.com/mrtnstl/bash-ci-cd/blob/main/docs/workflow_report_email.png" alt="workflow report email" width="400">
 
 2. Set your variables in `config.sh`. Create it in the project root, if it doesn't exist.
 
