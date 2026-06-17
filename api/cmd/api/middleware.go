@@ -2,14 +2,17 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"example.com/api/internals/logger"
 	"example.com/api/internals/utils"
+	"golang.org/x/time/rate"
 )
 
 const REQ_IP_KEY = "reqIP"
@@ -75,14 +78,41 @@ func (app *Application) RequireHeaderSecretMiddleware(next http.Handler) http.Ha
 }
 
 func (app *Application) RateLimiterMiddleware(next http.Handler) http.HandlerFunc {
+	limiterMap := make(map[string]*rate.Limiter)
+	var mu sync.Mutex
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		// TODO:
+		ip := r.Context().Value(REQ_IP_KEY)
+		castIP, ok := ip.(string)
+		if !ok {
+			http.Error(w, "Bad Request!", http.StatusBadRequest)
+			return
+		}
+
+		mu.Lock()
+		
+		limiter, ok := limiterMap[castIP]
+		if !ok {
+			limiter = rate.NewLimiter(app.Config.RlLimit, app.Config.RlBurst)
+			limiterMap[castIP] = limiter
+		}
+
+		mu.Unlock()
+
+		if !limiter.Allow() {
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(http.StatusTooManyRequests)
+			json.NewEncoder(w).Encode(map[string]string{"message": "too many requests"})
+			return
+		}
+
 		next.ServeHTTP(w, r)
 	}
 }
 
 func (app *Application) CheckAllowedDomainsMiddleware(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// check req ip for now
 		ip := r.Context().Value(REQ_IP_KEY)
 
 		allowedDomainsFromEnv := utils.GetEnvString(utils.ALLOWED_DOMAINS)

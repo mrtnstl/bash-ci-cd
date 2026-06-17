@@ -1,6 +1,7 @@
 package api
 
 import (
+	"database/sql"
 	"embed"
 	"log"
 	"net/http"
@@ -8,11 +9,13 @@ import (
 	"time"
 
 	"example.com/api/internals/runner"
+	"golang.org/x/time/rate"
 )
 
 type Application struct {
 	Config       Config
-	DB           any // not implemented
+	DB           *sql.DB
+	Store        any
 	StartedAt    time.Time
 	Runner       runner.Runner
 	GlobalWG     *sync.WaitGroup
@@ -23,6 +26,8 @@ type Config struct {
 	Addr              string
 	Static            embed.FS
 	AccessLogLocation string
+	RlLimit rate.Limit
+	RlBurst int
 }
 
 func NewApplication(config Config, wg *sync.WaitGroup, shutdownChan *chan bool) *Application {

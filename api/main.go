@@ -15,6 +15,7 @@ import (
 	"example.com/api/cmd/api"
 	"example.com/api/internals/utils"
 	"github.com/joho/godotenv"
+	"golang.org/x/time/rate"
 )
 
 //go:embed swagger.html
@@ -44,6 +45,8 @@ func main() {
 			Addr:              port,
 			Static:            SwaggerUI,
 			AccessLogLocation: pwd + "/access_log.txt",
+			RlLimit: rate.Limit(1),
+			RlBurst: 3,
 		},
 		&wg,
 		&shutdownChan,
