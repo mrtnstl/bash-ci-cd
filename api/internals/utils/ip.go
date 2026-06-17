@@ -7,7 +7,6 @@ import (
 	"strings"
 )
 
-
 func GetIP(r *http.Request) (string, error) {
 	ips := r.Header.Get("X-Forwarder-For")
 	splitIps := strings.Split(ips, ",")

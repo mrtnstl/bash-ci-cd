@@ -10,7 +10,6 @@ const (
 	GO_ENV          = "GO_ENV"
 )
 
-
 func GetEnvString(key string) string {
 	return os.Getenv(key)
 }
