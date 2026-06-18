@@ -102,7 +102,10 @@ func (app *Application) RateLimiterMiddleware(next http.Handler) http.HandlerFun
 		if !limiter.Allow() {
 			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusTooManyRequests)
-			json.NewEncoder(w).Encode(map[string]string{"message": "too many requests"})
+			if err := json.NewEncoder(w).Encode(map[string]string{"message": "too many requests"}); err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
 			return
 		}
 
