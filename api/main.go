@@ -6,7 +6,6 @@ import (
 	"errors"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"sync"
 	"syscall"
@@ -30,10 +29,6 @@ func main() {
 	}
 
 	port := utils.GetEnvString(utils.PORT)
-	pwd, err := os.Getwd()
-	if err != nil {
-		log.Fatalf("error while getting current working directory: %v", err)
-	}
 
 	// chanel for notifying goroutines of server shutdown
 	shutdownChan := make(chan bool)
@@ -44,7 +39,7 @@ func main() {
 		api.Config{
 			Addr:              port,
 			Static:            SwaggerUI,
-			AccessLogLocation: pwd + "/access_log.txt",
+			AccessLogLocation: "/usr/local/logs/access_log.txt",
 			RlLimit: rate.Limit(1),
 			RlBurst: 3,
 		},
@@ -78,7 +73,7 @@ func main() {
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()
 
-	if err = server.Shutdown(shutdownCtx); err != nil {
+	if err := server.Shutdown(shutdownCtx); err != nil {
 		if err == context.DeadlineExceeded {
 			log.Fatalf("timeout reached, force closing server: %v", err)
 		} else {

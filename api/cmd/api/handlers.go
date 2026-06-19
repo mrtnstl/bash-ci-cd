@@ -109,7 +109,7 @@ func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *htt
 
 	app.GlobalWG.Go(func() {
 		if err := app.Runner.ExecutePipeline(context.Background(), app.ShutdownChan); err != nil {
-			fmt.Printf("execute pipeline error: %v", err)
+			fmt.Printf("execute pipeline error: %v\n", err)
 		}
 		app.Runner.IsWorkflowRunning = false
 	})

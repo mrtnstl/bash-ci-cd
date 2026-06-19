@@ -40,6 +40,7 @@ func NewApplication(config Config, wg *sync.WaitGroup, shutdownChan *chan bool) 
 				Finish: time.Time{},
 			},
 			IsWorkflowRunning: false,
+			PipelineScriptsLocation: "/usr/local/scripts/",
 		},
 		GlobalWG:     wg,
 		ShutdownChan: shutdownChan,
