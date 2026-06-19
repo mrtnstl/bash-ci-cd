@@ -16,8 +16,4 @@ COPY --from=builder /api /api
 
 EXPOSE 8080
 
-ENV PORT=":8080" \
-    ALLOWED_DOMAINS="172.0.0.1" \
-    GO_ENV="production"
-
 CMD ["/api"]

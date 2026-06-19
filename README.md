@@ -126,16 +126,21 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
 
 ### **[in progress]** With GitHub webhook reciever, as a service
 
-
-
 1. Build and start backend service with Docker
 
     ```bash
-    docker build --rm -f DockerfileService -t ci-cd-service:test .
+    docker build -f DockerfileService -t ci-cd-service:test .
     ```
 
     ```bash
-    docker run -d -p 8080:8080 --name ci-cd-service-test ci-cd-service:test
+    docker run -d \
+        -p 8080:8080 \
+        -e PORT=":8080" \
+        -e ALLOWED_DOMAINS="172.0.0.1" \
+        -e GO_ENV="production" \
+        --mount type=bind,source="./",target="/usr/local/scripts/" \
+        --mount type=bind,source="./",target="/usr/local/logs/" \
+        --name ci-cd-service-test ci-cd-service:test
     ```
 
 ## Artifacts
