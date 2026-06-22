@@ -1,18 +1,14 @@
 package runner
 
 import (
-	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"os"
-	"os/exec"
-	"strings"
 	"time"
 )
 
 const PIPELINE_TIMEOUT_MINUTES int = 10
-const PIPELINE_ENTRY_SCRIPT_NAME string = "./start.sh"
+const PIPELINE_ENTRY_SCRIPT_NAME string = "start.sh"
 
 type LastWorkflowStat struct {
 	Start  time.Time `json:"last_wf_start"`
@@ -22,6 +18,7 @@ type LastWorkflowStat struct {
 type Runner struct {
 	LastWorkflowSinceStart LastWorkflowStat
 	IsWorkflowRunning      bool
+	PipelineScriptsLocation string
 }
 
 func (r *Runner) ExecutePipeline(ctx context.Context, shutdownChan *chan bool) error {
@@ -32,73 +29,48 @@ func (r *Runner) ExecutePipeline(ctx context.Context, shutdownChan *chan bool) e
 		r.IsWorkflowRunning = false
 	}()
 
-	// get gracefulShutdownChan
+	fmt.Println("ExecutePipeline called")
 
-	pwd, err := os.Getwd()
-	if err != nil {
-		// TODO: log error
-		return fmt.Errorf("error getting working directory: %v", err)
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	triggerPath := r.PipelineScriptsLocation + "trigger/pipeline.trigger"
+	donePath := triggerPath + ".done"
+	errorPath := triggerPath + ".error"
+	interruptPath := triggerPath + ".interrupt"
+
+	if err := os.WriteFile(triggerPath, []byte{}, 0644); err != nil {
+		return fmt.Errorf("failed to write trigger file: %w", err)
+	}
+	if err := os.WriteFile(interruptPath, []byte{}, 0644); err != nil {
+		return fmt.Errorf("failed to write interrupt file: %w", err)
 	}
 
-	slicedPwd := strings.Split(pwd, "/")
-	poppedPwd := slicedPwd[:len(slicedPwd)-1]
-	newPwd := strings.Join(poppedPwd, "/")
-
-	cmd := exec.Command(PIPELINE_ENTRY_SCRIPT_NAME)
-	cmd.Dir = newPwd
-
-	var outBuf bytes.Buffer
-	var errBuf bytes.Buffer
-	cmd.Stdout = &outBuf
-	cmd.Stderr = &errBuf
-
-	if err := cmd.Start(); err != nil {
-		return err
-	}
-	log.Printf("pipeline started with pid %d", cmd.Process.Pid)
-
-	done := make(chan error, 1)
-	go func() {
-		log.Println("started done chan goroutine")
-		done <- cmd.Wait()
-		log.Println("ended done chan goroutine")
-		close(done)
-	}()
-
-	log.Println("before select")
-
-	select {
-	case sig := <-*shutdownChan:
-		if sig {
-			log.Println("pipeline shutdown signal received via shutdownChan")
-			if cmd.Process != nil {
-				// break execution of running pipeline for now
+	for {
+		select {
+		case <- ticker.C:
+			if _, err := os.Stat(donePath); err == nil {
+				if _, err = os.ReadFile(donePath); err != nil {
+					return fmt.Errorf("failed to read done file: %w", err)
+				}
+				os.Remove(donePath)
 			}
 
-			<-done
+			if _, err := os.Stat(errorPath); err == nil {
+				if _, err := os.ReadFile(errorPath); err != nil {
+					return fmt.Errorf("failed to read error file: %w", err)
+				}
+				os.Remove(errorPath)
+			}
+
 			return nil
-		}
-	case <-ctx.Done():
-		log.Println("pipeline timeout or shutdown signal received, killing process...")
-		if cmd.Process != nil {
-			if err := cmd.Process.Kill(); err != nil {
-				return fmt.Errorf("failed to kill process: %v", err)
+		case <- ctx.Done():
+			if err := os.WriteFile(interruptPath, []byte("workflow_interrupt"), 0644); err != nil {
+				return fmt.Errorf("failed to write interrupt file: %w", err)
 			}
+			return ctx.Err()
+		case <- *shutdownChan:
+			cancel()
 		}
-
-		<-done
-		return ctx.Err()
-
-	case err := <-done:
-		if err != nil {
-			log.Printf("pipeline finished with an error: %v", err)
-		} else {
-			log.Println("pipeline finished successfully")
-		}
-
-		r.LastWorkflowSinceStart.Finish = time.Now().UTC()
-		return err
 	}
-
-	return nil
 }

@@ -133,10 +133,12 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
     ```
 
     ```bash
+    # ALLOWED_DOMAINS is more like allowed IPs currently. 172.17.0.1 is the default host IP in the container.
+
     docker run -d \
         -p 8080:8080 \
         -e PORT=":8080" \
-        -e ALLOWED_DOMAINS="172.0.0.1" \
+        -e ALLOWED_DOMAINS="172.17.0.1" \
         -e GO_ENV="production" \
         --mount type=bind,source="./",target="/usr/local/scripts/" \
         --mount type=bind,source="./",target="/usr/local/logs/" \
