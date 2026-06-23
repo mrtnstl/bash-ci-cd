@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"slices"
 	"strconv"
@@ -119,6 +120,9 @@ func (app *Application) CheckAllowedDomainsMiddleware(next http.Handler) http.Ha
 		ip := r.Context().Value(REQ_IP_KEY)
 
 		allowedDomainsFromEnv := utils.GetEnvString(utils.ALLOWED_DOMAINS)
+		if allowedDomainsFromEnv == "" {
+			http.Error(w, errors.New("internal server error").Error(), http.StatusInternalServerError)
+		}
 
 		allowedDomains := strings.Split(allowedDomainsFromEnv, ";")
 		if !slices.Contains(allowedDomains, ip.(string)) {

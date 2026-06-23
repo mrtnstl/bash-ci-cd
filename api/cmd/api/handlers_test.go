@@ -7,6 +7,8 @@ import (
 	"net/http/httptest"
 	"sync"
 	"testing"
+
+	"golang.org/x/time/rate"
 )
 
 var wg sync.WaitGroup
@@ -18,6 +20,8 @@ func TestMain(m *testing.M) {
 	shutdownChan = make(chan bool)
 	app = NewApplication(Config{
 		Addr: ":8080",
+		RlLimit: rate.Limit(1),
+		RlBurst: 3,
 	},
 		&wg,
 		&shutdownChan,
