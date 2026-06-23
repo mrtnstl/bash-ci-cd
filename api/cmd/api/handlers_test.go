@@ -9,16 +9,30 @@ import (
 	"testing"
 )
 
-func TestGetHealthHandler(t *testing.T) {
-	var wg sync.WaitGroup
-	shutdownChan := make(chan bool)
-	app := NewApplication(Config{
+var wg sync.WaitGroup
+var shutdownChan chan bool
+var app *Application
+var server *httptest.Server
+
+func TestMain(m *testing.M) {
+	shutdownChan = make(chan bool)
+	app = NewApplication(Config{
 		Addr: ":8080",
 	},
 		&wg,
 		&shutdownChan,
 	)
-	server := httptest.NewServer(http.HandlerFunc(app.getHealthHandler))
+
+	m.Run()
+
+	shutdownChan = nil
+	app = nil
+	server.Close()
+	server = nil
+}
+
+func TestGetHealthHandler(t *testing.T) {
+	server = httptest.NewServer(http.HandlerFunc(app.getHealthHandler))
 
 	resp, err := http.Get(server.URL)
 	if err != nil {
@@ -57,58 +71,47 @@ func TestGetHealthHandler(t *testing.T) {
 }
 
 func TestGetStatsPaginatedHandler(t *testing.T) {
-	var wg sync.WaitGroup
-	shutdownChan := make(chan bool)
-	app := NewApplication(Config{
-		Addr: ":8080",
-	},
-		&wg,
-		&shutdownChan,
-	)
-	server := httptest.NewServer(http.HandlerFunc(app.getStatsPaginatedHandler))
+	server = httptest.NewServer(http.HandlerFunc(app.getStatsPaginatedHandler))
 
-	// case: no query params
-	resp, err := http.Get(server.URL + "?limit=&page=")
-	if err != nil {
-		t.Error(err)
+	cases := []struct{
+		name string
+		params string
+		expectedStatusCode int
+	}{
+		{
+			"unspecifiedParams",
+			"?limit=&page=",
+			200,
+		},
+		{
+			"validParams",
+			"?limit=20&page=1",
+			200,
+		},
+		{
+			"invalidLimit",
+			"?limit=invalid&page=2",
+			400,
+		},
+		{
+			"invalidPage",
+			"?limit=&page=invalid",
+			400,
+		},
 	}
 
-	if resp.StatusCode != 200 {
-		t.Errorf("expected status code 200 but got %d", resp.StatusCode)
+	for _, v := range cases {
+		t.Run(v.name, func(t *testing.T){
+			resp, err := http.Get(server.URL + v.params)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if resp.StatusCode != v.expectedStatusCode {
+				t.Errorf("expected status code %d but got %d",v.expectedStatusCode, resp.StatusCode)
+			}
+		})
 	}
-
-	// case: with valid query params
-
-	resp, err = http.Get(server.URL + "?limit=20&page=1")
-	if err != nil {
-		t.Error(err)
-	}
-
-	if resp.StatusCode != 200 {
-		t.Errorf("expected status code 200 but got %d", resp.StatusCode)
-	}
-
-	// TODO: validate body
-
-	// case: with invalid query params
-	resp, err = http.Get(server.URL + "?limit=invalid&page=2")
-	if err != nil {
-		t.Error(err)
-	}
-
-	if resp.StatusCode != 400 {
-		t.Errorf("expected status code 400 but got %d", resp.StatusCode)
-	}
-
-	resp, err = http.Get(server.URL + "?limit=&page=invalid")
-	if err != nil {
-		t.Error(err)
-	}
-
-	if resp.StatusCode != 400 {
-		t.Errorf("expected status code 400 but got %d", resp.StatusCode)
-	}
-
 }
 
 func TestTriggerCICDWorkflowHandler(t *testing.T) {
@@ -116,15 +119,7 @@ func TestTriggerCICDWorkflowHandler(t *testing.T) {
 }
 
 func TestWildcardRouteHandler(t *testing.T) {
-	var wg sync.WaitGroup
-	shutdownChan := make(chan bool)
-	app := NewApplication(Config{
-		Addr: ":8080",
-	},
-		&wg,
-		&shutdownChan,
-	)
-	server := httptest.NewServer(http.HandlerFunc(app.wildcardRouteHandler))
+	server = httptest.NewServer(http.HandlerFunc(app.wildcardRouteHandler))
 
 	resp, err := http.Get(server.URL)
 	if err != nil {
