@@ -8,6 +8,17 @@ The pipeline steps are defined in the `tasks` directory and are customizable.
 
 Currently set up to process a Node.js project written in TypeScript, linted with ESLint, tested with Jest.
 
+## contents
+
+1. [What it currently does?](#what-it-currently-does)
+2. [Requirements](#requirements)
+3. [Requirements](#run)
+    1. [As a standalone script](#as-a-standalone-script)
+    2. [Inside a Docker container](#inside-a-docker-container)
+    3. [With GitHub webhook reciever, as a service](#in-progress-with-github-webhook-reciever-as-a-service)
+4. [Artifacts](#artifacts)
+5. [Logs](#logs)
+
 ## What it currently does?
 ```
 0. checks system dependencies and prepares the workflow
@@ -128,6 +139,10 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
 
 1. Build and start backend service with Docker
 
+    ### high level architecture
+
+    ![high-level-architecture](https://github.com/mrtnstl/bash-ci-cd/blob/main/docs/arch.png "high level architecture")
+
     ```bash
     docker build -f DockerfileService -t ci-cd-service:test .
     ```
@@ -140,6 +155,7 @@ If you'd like to use the pipeline with docker, these dependencies are installed 
         -e PORT=":8080" \
         -e ALLOWED_DOMAINS="172.17.0.1" \
         -e GO_ENV="production" \
+        -e GITHUB_SECRET="your-github-secret" \
         --mount type=bind,source="./",target="/usr/local/scripts/" \
         --mount type=bind,source="./",target="/usr/local/logs/" \
         --name ci-cd-service-test ci-cd-service:test
