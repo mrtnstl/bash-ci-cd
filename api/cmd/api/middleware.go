@@ -2,8 +2,14 @@ package api
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"crypto/subtle"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"io"
 	"net/http"
 	"slices"
 	"strconv"
@@ -114,6 +120,7 @@ func (app *Application) RateLimiterMiddleware(next http.Handler) http.HandlerFun
 	}
 }
 
+// GitHub webhooks request IP is not necessarily deterministic. until not verified, don't use this mw
 func (app *Application) CheckAllowedDomainsMiddleware(next http.Handler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// check req ip for now
@@ -129,6 +136,59 @@ func (app *Application) CheckAllowedDomainsMiddleware(next http.Handler) http.Ha
 			http.Error(w, "Not Allowed!", http.StatusUnauthorized)
 			return
 		}
+
+		next.ServeHTTP(w, r)
+	}
+}
+
+// ValidateGitHubWebhookMiddleware validates HMAC signature coming from X-Hub-Signature-256 header,
+// and event type in request body
+func (app *Application) ValidateGitHubWebhookMiddleware(next http.Handler) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		headerSignature := r.Header.Get("X-Hub-Signature-256")
+		if headerSignature == "" {
+			http.Error(w, "Not Authorized!", http.StatusUnauthorized)
+		}
+		
+		ghSecret := utils.GetEnvString(utils.GITHUB_SECRET)
+		if ghSecret == "" {
+			http.Error(w, "Internal Server Error!", http.StatusInternalServerError)
+		}
+
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Internal Server Error!", http.StatusInternalServerError)
+		}
+		defer r.Body.Close()
+
+		if !strings.HasPrefix(headerSignature, "sha256=") {
+			http.Error(w, "Not Authorized!", http.StatusUnauthorized)
+		}
+
+		headerSignature = strings.TrimPrefix(headerSignature, "sha256=")
+
+		mac := hmac.New(sha256.New, []byte(headerSignature))
+		throwawayBody := body
+		mac.Write(throwawayBody)
+		expectedMAC := mac.Sum(nil)
+		expectedSig := hex.EncodeToString(expectedMAC)
+
+		if subtle.ConstantTimeCompare([]byte(headerSignature), []byte(expectedSig)) != 1 {
+			http.Error(w, "Not Authorized!", http.StatusUnauthorized)
+		}
+
+		// TODO:
+		// validate event type
+		xGHEventHeader := r.Header.Get("x-github-event")
+		fmt.Println("xGHEventHeader:", xGHEventHeader)
+
+		reqBody := map[string]any{}
+		err = json.NewDecoder(r.Body).Decode(&reqBody)
+		if err != nil {
+			http.Error(w, "Internal Server Error!", http.StatusInternalServerError)
+		}
+		fmt.Println("req. body:", reqBody)
+		
 
 		next.ServeHTTP(w, r)
 	}
