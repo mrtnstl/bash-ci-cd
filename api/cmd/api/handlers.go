@@ -111,7 +111,6 @@ func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *htt
 		if err := app.Runner.ExecutePipeline(context.Background(), app.ShutdownChan); err != nil {
 			fmt.Printf("execute pipeline error: %v\n", err)
 		}
-		app.Runner.IsWorkflowRunning = false
 	})
 
 	if err := json.NewEncoder(w).Encode("{'workflow': 'initiating'}"); err != nil {

@@ -6,52 +6,50 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"os/signal"
 	"path/filepath"
-	"strings"
 	"sync"
+	"syscall"
 	"time"
 )
 
 var (
 	scriptsDir string
 	triggerDir string
-	lockFile string
+	lockFile   string
 )
 
 var mu sync.Mutex
 var wg sync.WaitGroup
 
-func main(){
+func main() {
 	fmt.Println("start listening")
-	
-	// getting current dir
+
 	pwd, err := os.Getwd()
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 
-	// setting up paths
 	scriptsDir = pwd
 	triggerDir = scriptsDir + "/trigger"
 	lockFile = scriptsDir + "/.script-lock"
 
-	// creating it directory
 	os.MkdirAll(triggerDir, 0755)
 
-	// set up done and interrupt channels
+	osShutdownCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
 	doneChan := make(chan bool, 1)
 	defer close(doneChan)
 
-	interruptCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	interruptChan := make(chan any, 1)
+	defer close(interruptChan)
 
-	wg.Add(1)
 	// goroutine for the listener
-	go func(interruptCtx context.Context){
-		defer wg.Done()
+	go func(interruptChan <-chan any) {
 		for {
-			fmt.Println("an iteration...")
+			fmt.Println("trigger watcher...")
 
 			files, err := filepath.Glob(triggerDir + "/*.trigger")
 			if err != nil {
@@ -62,8 +60,6 @@ func main(){
 				time.Sleep(500 * time.Millisecond)
 				continue
 			}
-			
-			
 
 			mu.Lock()
 			if isLocked() {
@@ -71,70 +67,70 @@ func main(){
 				time.Sleep(1 * time.Second)
 				continue
 			}
-	
+
 			createLock()
 			triggerFile := files[0]
-			
-			cmd:= exec.Command("./start.sh")
-	
+
+			cmd := exec.Command("./start.sh")
+
 			var outBuf bytes.Buffer
 			var errBuf bytes.Buffer
-	
+
 			cmd.Stdout = &outBuf
 			cmd.Stderr = &errBuf
 
-
 			err = cmd.Run()
 			if err != nil {
-				os.WriteFile(triggerFile + ".error", errBuf.Bytes(), 0644)
+				os.WriteFile(triggerFile+".error", errBuf.Bytes(), 0644)
 			}
-	
-			os.WriteFile(triggerFile + ".done", outBuf.Bytes(), 0644)
-	
+
+			os.WriteFile(triggerFile+".done", outBuf.Bytes(), 0644)
+
 			removeLock()
 			os.Remove(triggerFile)
 			mu.Unlock()
 
 			doneChan <- true
 
-			// waiting for channels
 			select {
-			case <- doneChan:
+			case <-doneChan:
 				// workflow done
-			case <- interruptCtx.Done():
+				fmt.Println("trw select doneChan")
+			case <-interruptChan:
 				// workflow interrupted
-				interruptCtx.Err()
-			}
-		}
-	}(interruptCtx)
-
-	go func(){
-		for {
-			interruptFiles, err := filepath.Glob(triggerDir + "/*.interrupt")
-			if err != nil {
-				fmt.Println(err)
-				os.Exit(1)
-			}
-			if len(interruptFiles) == 0 {
-				// has to have an xyz.interrupt file
-			}
-
-			interruptFile := interruptFiles[0]
-
-			interruptBytes, err := os.ReadFile(interruptFile)
-			if err != nil {
-
-			}
-			if strings.Contains(string(interruptBytes), "workflow_interrupt") {
-				cancel()
+				fmt.Println("trw select interruptChan")
+				return
+			case <-osShutdownCtx.Done():
+				fmt.Println("trw select isShutdownCtx")
 				return
 			}
-
-			time.Sleep(300 * time.Millisecond)
 		}
-	}()
+	}(interruptChan)
 
-	wg.Wait()
+	// goroutine for the interrupt
+	go func(interruptChan chan<- any) {
+		for {
+
+			fmt.Println("interrupt watcher...")
+			interruptFiles, err := filepath.Glob(triggerDir + "/*.interrupt")
+			if err != nil {
+				panic(err)
+			}
+
+			if len(interruptFiles) == 0 {
+				time.Sleep(500 * time.Millisecond)
+				continue
+			}
+
+			interruptChan <- true
+
+			if err := os.RemoveAll("*.interrupt"); err != nil {
+				panic(err)
+			}
+		}
+	}(interruptChan)
+
+	<-osShutdownCtx.Done()
 	fmt.Println("end of listener")
 }
 

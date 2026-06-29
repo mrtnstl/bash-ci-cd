@@ -2,6 +2,7 @@ package runner
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"time"
@@ -42,30 +43,29 @@ func (r *Runner) ExecutePipeline(ctx context.Context, shutdownChan *chan bool) e
 	if err := os.WriteFile(triggerPath, []byte{}, 0644); err != nil {
 		return fmt.Errorf("failed to write trigger file: %w", err)
 	}
-	if err := os.WriteFile(interruptPath, []byte{}, 0644); err != nil {
-		return fmt.Errorf("failed to write interrupt file: %w", err)
-	}
 
 	for {
 		select {
 		case <- ticker.C:
+			var errs []error
+
 			if _, err := os.Stat(donePath); err == nil {
 				if _, err = os.ReadFile(donePath); err != nil {
-					return fmt.Errorf("failed to read done file: %w", err)
+					errs = append(errs, fmt.Errorf("failed to read done file: %w", err))
 				}
 				os.Remove(donePath)
 			}
 
 			if _, err := os.Stat(errorPath); err == nil {
 				if _, err := os.ReadFile(errorPath); err != nil {
-					return fmt.Errorf("failed to read error file: %w", err)
+					errs = append(errs, fmt.Errorf("failed to read error file: %w", err))
 				}
 				os.Remove(errorPath)
 			}
-
-			return nil
+			
+			return errors.Join(errs...)
 		case <- ctx.Done():
-			if err := os.WriteFile(interruptPath, []byte("workflow_interrupt"), 0644); err != nil {
+			if err := os.WriteFile(interruptPath, []byte{}, 0644); err != nil {
 				return fmt.Errorf("failed to write interrupt file: %w", err)
 			}
 			return ctx.Err()
