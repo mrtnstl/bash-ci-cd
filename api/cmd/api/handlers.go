@@ -100,7 +100,7 @@ func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *htt
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		w.WriteHeader(http.StatusAccepted)
+		w.WriteHeader(http.StatusOK)
 		return
 	}
 
@@ -118,7 +118,7 @@ func (app *Application) triggerCICDWorkflowHandler(w http.ResponseWriter, r *htt
 		return
 	}
 
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(http.StatusAccepted)
 }
 
 func (app *Application) wildcardRouteHandler(w http.ResponseWriter, r *http.Request) {

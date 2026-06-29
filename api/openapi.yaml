@@ -60,13 +60,13 @@ paths:
       description: Triggers CI/CD workflow. If a workflow is running, it returns a message signaling it.
       parameters:
       responses:
-        "200":
-          description: workflow started
+        "202":
+          description: workflow started (request accepted)
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/WorkflowStartResponse"
-        "202":
+        "200":
           description: workflow already running
           content:
             application/json:
